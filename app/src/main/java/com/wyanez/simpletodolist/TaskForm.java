@@ -1,6 +1,5 @@
 package com.wyanez.simpletodolist;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
@@ -22,11 +21,11 @@ import java.util.Calendar;
 
 public class TaskForm {
 
-    private final Activity mainActivity;
+    private final MainActivity mainActivity;
     private final TaskSaveService taskSaveService;
     private AlertDialog dialogTask ;
 
-    public TaskForm(Activity mainActivity) {
+    public TaskForm(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         IConsumerResult<Long> consumerResult = (result) -> { finishSaveTask(result);};
         taskSaveService = new TaskSaveService(mainActivity,consumerResult);
@@ -55,36 +54,19 @@ public class TaskForm {
                 .setView(formElementsView)
                 .setTitle("New Task")
                 .setNegativeButton("Cancel",
-                        new DialogInterface.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which){
-                                Log.d("New Task","Cancel Selected");
-                            }
-                        })
+                        (dialog, which) -> Log.d("New Task","Cancel Selected"))
                 .setPositiveButton("Save",
-                        new DialogInterface.OnClickListener()
-                        {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which){
-                            }
-                        });
+                        (dialog, which) -> { });
 
         dialogTask = builderDialogTask.create();
         dialogTask.show();
 
-        dialogTask.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                saveDataForm(editTitle,
-                        editDescription,
-                        editTags,
-                        deadline,
-                        spinnerPriority,
-                        checkActive);
-
-            }
-        });
+        dialogTask.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> saveDataForm(editTitle,
+                editDescription,
+                editTags,
+                deadline,
+                spinnerPriority,
+                checkActive));
     }
 
     private void saveDataForm(EditText editTitle,
@@ -126,7 +108,6 @@ public class TaskForm {
             return false;
         }
 
-        //String optionSelect = getResources().getStringArray(R.array.array_priorities)[0];
         if(priority<=0){
             Toast.makeText(mainActivity.getApplicationContext(), "Attention: you must select the priority", Toast.LENGTH_LONG).show();
             return false;
@@ -146,14 +127,11 @@ public class TaskForm {
     }
 
     private void showDatePickerDialog(final EditText editTextDate, final Calendar selectedDate){
-        DatePickerDialog.OnDateSetListener listener=new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth)
-            {
-                editTextDate.setText(String.format("%2d/%2d/%d",dayOfMonth,monthOfYear+1, year));
-                selectedDate.set(year,monthOfYear,dayOfMonth);
+        DatePickerDialog.OnDateSetListener listener= (view, year, monthOfYear, dayOfMonth) -> {
+            editTextDate.setText(String.format("%2d/%2d/%d",dayOfMonth,monthOfYear+1, year));
+            selectedDate.set(year,monthOfYear,dayOfMonth);
 
-            }};
+        };
         int year = selectedDate.get(Calendar.YEAR);
         int month = selectedDate.get(Calendar.MONTH);
         int day = selectedDate.get(Calendar.DAY_OF_MONTH);
@@ -166,7 +144,10 @@ public class TaskForm {
         if(taskId>0) msg = String.format("Task saved sucessfully! id = %d", taskId);
         else msg = "An error occurred while saving Task";
         Toast.makeText(mainActivity.getApplicationContext(),msg,Toast.LENGTH_LONG).show();
-        if (taskId>0) dialogTask.cancel();
+        if (taskId>0){
+            dialogTask.cancel();
+            mainActivity.listTasks();
+        }
     }
 
 }

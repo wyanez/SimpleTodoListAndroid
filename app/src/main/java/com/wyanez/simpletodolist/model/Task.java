@@ -1,9 +1,12 @@
 package com.wyanez.simpletodolist.model;
 
+import com.wyanez.simpletodolist.util.Utilities;
+
 import java.io.Serializable;
 import java.util.Calendar;
 
 public class Task  implements Serializable {
+    private int id;
     private String title;
     private String description;
     private String tags;
@@ -20,6 +23,14 @@ public class Task  implements Serializable {
         this.deadline = deadline;
         this.priority = priority;
         this.active = active;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -51,8 +62,7 @@ public class Task  implements Serializable {
     }
 
     public String getDeadlineYMD(){
-        String strDeadline = String.format("%4d/%02d/%02d",deadline.get(Calendar.YEAR), deadline.get(Calendar.MONTH)+1,deadline.get(Calendar.DAY_OF_MONTH));
-        return strDeadline;
+        return Utilities.CalendarToStringYmd(deadline);
     }
 
     public void setDeadline(Calendar deadline) {
@@ -78,11 +88,12 @@ public class Task  implements Serializable {
     @Override
     public String toString() {
         return "Task{" +
+                "id='" + id + '\'' +
                 "title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", tags='" + tags + '\'' +
                 ", deadline='" + getDeadlineYMD() + '\'' +
-                ", priority='" + priority + '\'' +
+                ", priority=" + priority +
                 ", active=" + active +
                 '}';
     }
