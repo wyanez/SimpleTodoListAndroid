@@ -19,8 +19,20 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.wyanez.simpletodolist.model.Task;
+import com.wyanez.simpletodolist.service.TaskSaveService;
+import com.wyanez.simpletodolist.util.IConsumerResult;
 
 public class MainActivity extends AppCompatActivity {
+
+
+    private final TaskSaveService taskSaveService;
+    AlertDialog dialogTask ;
+
+    public MainActivity() {
+        IConsumerResult<Long> consumerResult = (result) -> { finishSaveTask(result);};
+        taskSaveService = new TaskSaveService(this,consumerResult);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,24 +87,24 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
 
-        final AlertDialog dialogTask = builderDialogTask.create();
+        dialogTask = builderDialogTask.create();
         dialogTask.show();
 
         dialogTask.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            boolean result = saveDataForm(editTitle,
-                                          editDescription,
-                                          editTags,
-                                          deadline,
-                                          spinnerPriority,
-                                          checkActive);
-            if (result) dialogTask.cancel();
+            saveDataForm(editTitle,
+                         editDescription,
+                         editTags,
+                         deadline,
+                         spinnerPriority,
+                         checkActive);
+
             }
         });
     }
 
-    private boolean saveDataForm(EditText editTitle,
+    private void saveDataForm(EditText editTitle,
                          EditText editDescription,
                          EditText editTags,
                          Calendar deadline,
@@ -110,11 +122,8 @@ public class MainActivity extends AppCompatActivity {
         if(isValid){
             Task task = new Task(title,description,tags,deadline,priority,active);
             Log.d("NewTask",task.toString());
-            Toast.makeText(MainActivity.this, "Task saved sucessfully!", Toast.LENGTH_SHORT).show();
-            return true;
+            taskSaveService.save(task);
         }
-
-        return false;
     }
 
     private boolean validateData(String title, String description,String tags, Calendar deadline, int priority, boolean active){
@@ -158,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear,int dayOfMonth)
             {
-                editTextDate.setText(String.format("%d/%d/%d",dayOfMonth,monthOfYear+1, year));
+                editTextDate.setText(String.format("%2d/%2d/%d",dayOfMonth,monthOfYear+1, year));
                 selectedDate.set(year,monthOfYear,dayOfMonth);
 
             }};
@@ -168,4 +177,13 @@ public class MainActivity extends AppCompatActivity {
         DatePickerDialog dpDialog = new DatePickerDialog(MainActivity.this, listener, year, month, day);
         dpDialog.show();
     }
+
+    private void finishSaveTask(Long taskId) {
+        String msg;
+        if(taskId>0) msg = String.format("Task saved sucessfully! id = %d", taskId);
+        else msg = "An error occurred while saving Task";
+        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_LONG).show();
+        if (taskId>0) dialogTask.cancel();
+    }
+
 }

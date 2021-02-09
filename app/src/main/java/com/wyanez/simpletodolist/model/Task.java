@@ -50,6 +50,11 @@ public class Task  implements Serializable {
         return deadline;
     }
 
+    public String getDeadlineYMD(){
+        String strDeadline = String.format("%4d/%02d/%02d",deadline.get(Calendar.YEAR), deadline.get(Calendar.MONTH)+1,deadline.get(Calendar.DAY_OF_MONTH));
+        return strDeadline;
+    }
+
     public void setDeadline(Calendar deadline) {
         this.deadline = deadline;
     }
@@ -72,12 +77,11 @@ public class Task  implements Serializable {
 
     @Override
     public String toString() {
-        String strDeadline = String.format("%d/%d/%d",deadline.get(Calendar.YEAR), deadline.get(Calendar.MONTH)+1,deadline.get(Calendar.DAY_OF_MONTH));
         return "Task{" +
                 "title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", tags='" + tags + '\'' +
-                ", deadline='" + strDeadline + '\'' +
+                ", deadline='" + getDeadlineYMD() + '\'' +
                 ", priority='" + priority + '\'' +
                 ", active=" + active +
                 '}';
