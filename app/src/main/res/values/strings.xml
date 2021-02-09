@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">SimpleToDoList</string>
     <string-array name="array_priorities">
+        <item>Select Priority</item>
         <item>Urgent, Important</item>
         <item>Urgent, Not Important</item>
         <item>Not Urgent, Important</item>
