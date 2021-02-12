@@ -137,9 +137,11 @@ public class MainActivity extends AppCompatActivity {
             Task task = getItem(position);
             tvPriority.setTextColor(getResources().getColor(R.color.colorPrimary));
 
-            if(Utilities.CalendarEquals(task.getDeadline(),today) || Utilities.CalendarEquals(task.getDeadline(),tomorrow)) {
+
+            boolean taskInPast = task.getDeadline().before(today) || Utilities.CalendarEquals(task.getDeadline(),today);
+            if(taskInPast || Utilities.CalendarEquals(task.getDeadline(),tomorrow)) {
                 tvDeadline.setTextColor(getResources().getColor(R.color.colorAccent));
-                if (Utilities.CalendarEquals(task.getDeadline(),today)) tvDeadline.setTypeface(tvDeadline.getTypeface(), Typeface.BOLD);
+                if (taskInPast) tvDeadline.setTypeface(tvDeadline.getTypeface(), Typeface.BOLD);
             }
             else tvDeadline.setTextColor(getResources().getColor(R.color.colorPrimary));
 
