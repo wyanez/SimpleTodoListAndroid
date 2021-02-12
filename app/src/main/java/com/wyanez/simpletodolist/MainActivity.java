@@ -4,13 +4,18 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,6 +59,38 @@ public class MainActivity extends AppCompatActivity {
             taskForm.showFormAddTask();
         });
         this.listTasks();
+        registerForContextMenu(listview);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if(v.getId() == R.id.listview) {
+            MenuInflater inflater = getMenuInflater();
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            Task task =listViewAdapter.getItem(info.position);
+            menu.setHeaderTitle("Task id " + task.getId());
+            inflater.inflate(R.menu.menu_task_list, menu);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        Log.d("onContextItemSelected","position = " +info.position);
+        Task task = null;
+        if(info.position >= 0) task = listViewAdapter.getItem(info.position);
+        switch (item.getItemId()){
+            case R.id.menuEdit:
+                Toast.makeText(getApplicationContext(),"Edit Task Selected!",Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.menuDelete:
+                Toast.makeText(getApplicationContext(),"Delete Task Selected!",Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+
     }
 
     public void listTasks() {
