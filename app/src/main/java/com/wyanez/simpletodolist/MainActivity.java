@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         IConsumerResult<List<Task>> consumerResult = this::listRecords;
         this.listService = new TaskListService(this, consumerResult);
 
-        IConsumerResult<Long> consumerResultDelete = this::processDeleteResult;
+        IConsumerResult<Integer> consumerResultDelete = this::processDeleteResult;
         this.deleteService = new TaskDeleteService(this, consumerResultDelete);
     }
 
@@ -184,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void processDeleteResult(Long result) {
+    private void processDeleteResult(Integer rowsAffected) {
         String msg;
-        if(result>0) msg = "Task deleted sucessfully";
+        if (rowsAffected > 0) msg = "Task deleted sucessfully";
         else msg = "ATENTION: Task Can't be deleted!";
         Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_LONG).show();
     }

@@ -17,10 +17,10 @@ import java.util.List;
  */
 public abstract class BaseDaoSQLite<T> {
     private DbHelper dbHelper;
-    private SQLiteDatabase db;
+    protected SQLiteDatabase db;
     protected String tableName;
 
-    public BaseDaoSQLite(DbHelper dbHelper) {
+    public void setDbHelper(DbHelper dbHelper) {
         this.dbHelper = dbHelper;
     }
 
@@ -30,7 +30,7 @@ public abstract class BaseDaoSQLite<T> {
 
     protected abstract void initColumns(Cursor cursor);
 
-    protected long insert(T entity) {
+    protected long doInsert(T entity) {
         db = dbHelper.getWritableDatabase();
         ContentValues values = getContentValues(entity);
 
@@ -48,7 +48,7 @@ public abstract class BaseDaoSQLite<T> {
         return newId;
     }
 
-    protected int update(T entity, long id, String columnIdName) {
+    protected int doUpdate(T entity, long id, String columnIdName) {
         db = dbHelper.getWritableDatabase();
         ContentValues values = getContentValues(entity);
         Log.d("Dao/update", values.toString());
@@ -60,7 +60,7 @@ public abstract class BaseDaoSQLite<T> {
         return rowsAffected;
     }
 
-    protected long delete(long id, String columnIdName) {
+    protected int doDelete(long id, String columnIdName) {
         int rowsAffected = -1;
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         String whereClause = String.format("%s = ?", columnIdName);
@@ -75,10 +75,10 @@ public abstract class BaseDaoSQLite<T> {
         return rowsAffected;
     }
 
-    protected List<T> list(String sql) {
+    protected List<T> doList(String sql) {
         db = dbHelper.getReadableDatabase();
         List<T> listEntities = new ArrayList<>();
-        Log.d("list", "SQL = " + sql);
+        Log.d("Dao/List", "SQL = " + sql);
         Cursor cursor = db.rawQuery(sql, null);
         initColumns(cursor);
         while (cursor.moveToNext()) {
@@ -87,6 +87,21 @@ public abstract class BaseDaoSQLite<T> {
         }
         db.close();
         return listEntities;
+    }
+
+    //Optional<T> require API min 24, current 21
+    protected T doGet(long id, String columnIdName) {
+        db = dbHelper.getReadableDatabase();
+        T entity = null;
+        String sql = String.format("SELECT * FROM %s WHERE %s = %d", tableName, columnIdName, id);
+        Log.d("Dao/Get", "SQL = " + sql);
+        Cursor cursor = db.rawQuery(sql, null);
+        if (cursor.moveToNext()) {
+            initColumns(cursor);
+            entity = getEntityFromCursor(cursor);
+        }
+        db.close();
+        return entity;  //Optional.ofNullable(entity) require API min 24, current 21
     }
 
 }

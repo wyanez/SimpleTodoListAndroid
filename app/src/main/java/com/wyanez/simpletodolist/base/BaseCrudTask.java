@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.wyanez.simpletodolist.db.DbHelper;
-import com.wyanez.simpletodolist.db.TaskDao;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 
 /**
@@ -14,21 +13,20 @@ import com.wyanez.simpletodolist.util.IConsumerResult;
  *
  * @param <T> Input Type for doBackground method of AsyncTask
  * @param <R> Type of Result
+ * @param <TDao> Type of Dao required for the task
  */
-public abstract class BaseCrudTask<T, R> extends AsyncTask<T, Void, R> {
+public abstract class BaseCrudTask<T, R, TDao extends IBaseDaoSQLite> extends AsyncTask<T, Void, R> {
     protected Context context;
     private ProgressDialog loading;
     private String titleDialogLoading;
-    protected TaskDao taskDao;
     private IConsumerResult<R> consumerResult;
+    protected TDao dao;
 
     public BaseCrudTask(Context context, String titleDialogLoading) {
         this.titleDialogLoading = titleDialogLoading;
         this.context = context;
-
-        DbHelper dbHelper = new DbHelper(context);
-        taskDao = new TaskDao(dbHelper);
     }
+
 
     @Override
     protected void onPreExecute() {
@@ -48,5 +46,10 @@ public abstract class BaseCrudTask<T, R> extends AsyncTask<T, Void, R> {
 
     public void setProcessResult(IConsumerResult<R> consumerResult) {
         this.consumerResult = consumerResult;
+    }
+
+    public void setDao(TDao daoInstance) {
+        this.dao = daoInstance;
+        this.dao.setDbHelper(new DbHelper(context));
     }
 }

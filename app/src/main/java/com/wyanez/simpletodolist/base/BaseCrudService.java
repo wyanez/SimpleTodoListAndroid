@@ -2,6 +2,7 @@ package com.wyanez.simpletodolist.base;
 
 import android.content.Context;
 
+import com.wyanez.simpletodolist.db.DbHelper;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 
 /**
@@ -18,5 +19,4 @@ public abstract class BaseCrudService<T> {
         this.context = context;
         this.consumerResult = consumerResult;
     }
-
 }

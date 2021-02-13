@@ -4,12 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.wyanez.simpletodolist.base.BaseDaoSQLite;
+import com.wyanez.simpletodolist.base.IBaseDaoSQLite;
 import com.wyanez.simpletodolist.model.Task;
 import com.wyanez.simpletodolist.util.Utilities;
 
 import java.util.List;
 
-public class TaskDao extends BaseDaoSQLite<Task> {
+public class TaskDao extends BaseDaoSQLite<Task> implements IBaseDaoSQLite<Task> {
     private int columnId;
     private int columnTitle;
     private int columnDescription;
@@ -18,8 +19,8 @@ public class TaskDao extends BaseDaoSQLite<Task> {
     private int columnDeadline;
     private int columnActive;
 
-    public TaskDao(DbHelper dbHelper) {
-        super(dbHelper);
+    public TaskDao() {
+        super();
         this.tableName = DbContract.TaskEntry.TABLE_NAME;
     }
 
@@ -60,24 +61,33 @@ public class TaskDao extends BaseDaoSQLite<Task> {
         return task;
     }
 
-    public List<Task> listTaskActive() {
+    @Override
+    public List<Task> list() {
         String sql = String.format("SELECT * FROM %s WHERE %s=%d ORDER BY date(%s) ASC,priority ASC",
                 DbContract.TaskEntry.TABLE_NAME,
                 DbContract.TaskEntry.COLUMN_ACTIVE, 1,
                 DbContract.TaskEntry.COLUMN_DEADLINE);
 
-        return super.list(sql);
+        return super.doList(sql);
     }
 
+    @Override
     public long insert(Task task) {
-        return super.insert(task);
+        return doInsert(task);
     }
 
-    public long delete(long id) {
-        return super.delete(id, DbContract.TaskEntry._ID);
+    @Override
+    public int delete(long id) {
+        return doDelete(id, DbContract.TaskEntry._ID);
     }
 
+    @Override
     public int update(Task task) {
-        return super.update(task, task.getId(), DbContract.TaskEntry._ID);
+        return doUpdate(task, task.getId(), DbContract.TaskEntry._ID);
+    }
+
+    @Override
+    public Task get(long id) {
+        return doGet(id, DbContract.TaskEntry._ID);
     }
 }
