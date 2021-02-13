@@ -101,4 +101,19 @@ public class TaskDao {
     }
 
 
+    public int delete(int taskId) {
+        int result = -1;
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        String whereClause = String.format("%s = ?",DbContract.TaskEntry._ID);
+        String[] whereParams = {String.valueOf(taskId)};
+        try {
+            result = db.delete(DbContract.TaskEntry.TABLE_NAME,whereClause,whereParams);
+            Log.d("TaskDao/delete", "RESULT: " + result);
+        }
+        catch(Exception ex){
+            Log.d("TaskDao/delete", "ERROR: " + ex.toString());
+        }
+        db.close();
+        return  result;
+    }
 }

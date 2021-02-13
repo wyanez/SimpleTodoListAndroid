@@ -1,6 +1,8 @@
 package com.wyanez.simpletodolist;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +24,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.wyanez.simpletodolist.model.Task;
+import com.wyanez.simpletodolist.service.TaskDeleteService;
 import com.wyanez.simpletodolist.service.TaskListService;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 import com.wyanez.simpletodolist.util.Utilities;
@@ -32,6 +35,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private final TaskListService listService;
+    private final TaskDeleteService deleteService;
     private TaskForm taskForm;
 
     private ListView listview;
@@ -41,8 +45,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     public MainActivity() {
-        IConsumerResult<List<Task>> consumerResult = (result) -> listRecords(result);
+        IConsumerResult<List<Task>> consumerResult = this::listRecords;
         this.listService = new TaskListService(this, consumerResult);
+
+        IConsumerResult<Integer> consumerResultDelete = this::processDeleteResult;
+        this.deleteService = new TaskDeleteService(this, consumerResultDelete);
     }
 
 
@@ -68,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         if(v.getId() == R.id.listview) {
             MenuInflater inflater = getMenuInflater();
             AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            Task task =listViewAdapter.getItem(info.position);
+            Task task = listViewAdapter.getItem(info.position);
             menu.setHeaderTitle("Task id " + task.getId());
             inflater.inflate(R.menu.menu_task_list, menu);
         }
@@ -78,19 +85,21 @@ public class MainActivity extends AppCompatActivity {
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         Log.d("onContextItemSelected","position = " +info.position);
-        Task task = null;
-        if(info.position >= 0) task = listViewAdapter.getItem(info.position);
-        switch (item.getItemId()){
-            case R.id.menuEdit:
-                Toast.makeText(getApplicationContext(),"Edit Task Selected!",Toast.LENGTH_SHORT).show();
-                return true;
-            case R.id.menuDelete:
-                Toast.makeText(getApplicationContext(),"Delete Task Selected!",Toast.LENGTH_SHORT).show();
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        Task task;
+        if(info.position >= 0) {
+            task = listViewAdapter.getItem(info.position);
+            switch (item.getItemId()) {
+                case R.id.menuEdit:
+                    Toast.makeText(getApplicationContext(), "Edit Task Selected!", Toast.LENGTH_SHORT).show();
+                    return true;
+                case R.id.menuDelete:
+                    showDialogDeleteTask(task);
+                    return true;
+                default:
+                    return super.onContextItemSelected(item);
+            }
         }
-
+        return super.onContextItemSelected(item);
     }
 
     public void listTasks() {
@@ -122,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             this.today = Calendar.getInstance();
             this.tomorrow = Calendar.getInstance();
             this.tomorrow.add(Calendar.DAY_OF_MONTH,1);
-;        }
+        }
 
         @NonNull
         @Override
@@ -152,6 +161,35 @@ public class MainActivity extends AppCompatActivity {
             tvDeadline.setText("Deadline: " + task.getDeadlineYMD());
             return rowView;
         }
+
+        public void deleteTask(Task task){
+            listTasks.remove(task);
+            this.notifyDataSetChanged();
+            tvRecordCount.setText(String.format("%d Tasks",listTasks.size()));
+        }
+    }
+
+    protected void showDialogDeleteTask(Task currentTask) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Task - " + currentTask.getId());
+        String msg = String.format("Are you sure to delete task #%s ?", currentTask.getId());
+        builder.setMessage(msg);
+        builder.setCancelable(false);
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            deleteService.delete(currentTask.getId());
+            listViewAdapter.deleteTask(currentTask);
+        });
+
+        builder.setNegativeButton("No", (dialog, which) -> Log.d("DeleteTask","Not Delete Selected"));
+
+        builder.show();
+    }
+
+    private void processDeleteResult(Integer result) {
+        String msg;
+        if(result>0) msg = "Task deleted sucessfully";
+        else msg = "ATENTION: Task Can't be deleted!";
+        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_LONG).show();
     }
 
 }
