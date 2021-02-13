@@ -1,74 +1,51 @@
 package com.wyanez.simpletodolist.service;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 
-import com.wyanez.simpletodolist.db.DbHelper;
-import com.wyanez.simpletodolist.db.TaskDao;
+import com.wyanez.simpletodolist.base.BaseCrudService;
+import com.wyanez.simpletodolist.base.BaseCrudTask;
 import com.wyanez.simpletodolist.model.Task;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 
-public class TaskSaveService {
-    private Context context;
-    private IConsumerResult<Long> consumerResult;
-
+public class TaskSaveService extends BaseCrudService<Long> {
+    public enum Operation {
+        CREATE,
+        EDIT
+    }
     public TaskSaveService(Context context, IConsumerResult<Long> consumerResult) {
-        this.consumerResult = consumerResult;
-        this.context = context;
+        super(context, consumerResult);
     }
 
-    public void save(Task task,String mode) {
+    public void save(Task task, Operation mode) {
         TaskSave saveTask = new TaskSave(context,"Saving task...",mode);
+        saveTask.setProcessResult(this.consumerResult);
         saveTask.execute(task);
     }
 
-    private void processResult(Long result) {
-        Log.d("processResult",result.toString());
-        consumerResult.process(result);
-    }
-
-    private class TaskSave  extends AsyncTask<Task, Void, Long> {
-        private Context context;
-        private ProgressDialog loading;
-        private String titleDialogLoading;
-        private TaskDao taskDao;
+    private static class TaskSave extends BaseCrudTask<Task, Long> {
         private Task task;
-        private String mode;
+        private Operation mode;
 
-        public TaskSave(Context context,String titleDialogLoading, String mode) {
-            this.titleDialogLoading = titleDialogLoading;
-            this.context = context;
+        TaskSave(Context context, String titleDialogLoading, Operation mode) {
+            super(context, titleDialogLoading);
             this.mode = mode;
-            DbHelper dbHelper = new DbHelper(context);
-            taskDao = new TaskDao(dbHelper);
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            loading = ProgressDialog.show(context,this.titleDialogLoading,"Espere...",false,false);
         }
 
         @Override
         protected Long doInBackground(Task... params) {
             task = params[0];
-            long taskId;
-            if(mode.equals("create")) taskId = taskDao.insert(task);
-            else{ //edit
-                int result = taskDao.update(task);
-                taskId = result>0 ? task.getId(): result;
+            long taskId = 0;
+            switch (mode) {
+                case CREATE:
+                    taskId = taskDao.insert(task);
+                    break;
+
+                case EDIT:
+                    int result = taskDao.update(task);
+                    taskId = result > 0 ? task.getId() : result;
+                    break;
             }
             return taskId;
-        }
-
-        @Override
-        protected void onPostExecute(Long result) {
-            super.onPostExecute(result);
-            Log.d("onPostExecute",result.toString());
-            this.loading.dismiss();
-            processResult(result);
         }
     }
 }

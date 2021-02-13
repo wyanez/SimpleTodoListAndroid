@@ -1,64 +1,35 @@
 package com.wyanez.simpletodolist.service;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 
-import com.wyanez.simpletodolist.db.DbHelper;
-import com.wyanez.simpletodolist.db.TaskDao;
+import com.wyanez.simpletodolist.base.BaseCrudService;
+import com.wyanez.simpletodolist.base.BaseCrudTask;
+import com.wyanez.simpletodolist.model.Task;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 
-public class TaskDeleteService {
-    private Context context;
-    private IConsumerResult<Integer> consumerResult;
+public class TaskDeleteService extends BaseCrudService<Long> {
 
-    public TaskDeleteService(Context context, IConsumerResult<Integer> consumerResult) {
-        this.consumerResult = consumerResult;
-        this.context = context;
+    public TaskDeleteService(Context context, IConsumerResult<Long> consumerResult) {
+        super(context, consumerResult);
     }
 
-    public void delete(int taskId) {
+    public void delete(Task task) {
         TaskDelete  deleteTask = new TaskDelete(context,"Deleting task...");
-        deleteTask.execute(taskId);
+        deleteTask.setProcessResult(this.consumerResult);
+        deleteTask.execute(task);
     }
 
-    private void processResult(Integer result) {
-        Log.d("processResult",result.toString());
-        consumerResult.process(result);
-    }
+    private static class TaskDelete extends BaseCrudTask<Task, Long> {
 
-    private class TaskDelete  extends AsyncTask<Integer,Void,Integer> {
-        private Context context;
-        private ProgressDialog loading;
-        private String titleDialogLoading;
-        private TaskDao taskDao;
-
-        public TaskDelete(Context context,String titleDialogLoading) {
-            this.titleDialogLoading = titleDialogLoading;
-            this.context = context;
-            DbHelper dbHelper = new DbHelper(context);
-            taskDao = new TaskDao(dbHelper);
+        TaskDelete(Context context, String titleDialogLoading) {
+            super(context, titleDialogLoading);
         }
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            loading = ProgressDialog.show(context,this.titleDialogLoading,"Espere...",false,false);
-        }
-
-        @Override
-        protected Integer doInBackground(Integer... params) {
-            int taskId = params[0];
+        protected Long doInBackground(Task... params) {
+            long taskId = params[0].getId();
             return taskDao.delete(taskId);
         }
 
-        @Override
-        protected void onPostExecute(Integer result) {
-            super.onPostExecute(result);
-            Log.d("onPostExecute",result.toString());
-            this.loading.dismiss();
-            processResult(result);
-        }
     }
 }

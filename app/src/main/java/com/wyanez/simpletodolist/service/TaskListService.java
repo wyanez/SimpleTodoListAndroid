@@ -1,65 +1,36 @@
 package com.wyanez.simpletodolist.service;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Log;
 
-import com.wyanez.simpletodolist.db.DbHelper;
-import com.wyanez.simpletodolist.db.TaskDao;
+import com.wyanez.simpletodolist.base.BaseCrudService;
+import com.wyanez.simpletodolist.base.BaseCrudTask;
 import com.wyanez.simpletodolist.model.Task;
 import com.wyanez.simpletodolist.util.IConsumerResult;
 
 import java.util.List;
 
-public class TaskListService {
-    private Context context;
-    private IConsumerResult<List<Task>> consumerResult;
+public class TaskListService extends BaseCrudService<List<Task>> {
 
     public TaskListService(Context context, IConsumerResult<List<Task>> consumerResult) {
-        this.context = context;
-        this.consumerResult = consumerResult;
+        super(context, consumerResult);
     }
 
     public void list() {
         TaskListTask task = new TaskListTask(context, "Loading ToDoList");
+        task.setProcessResult(this.consumerResult);
         task.execute();
     }
 
-    private void processResult(List<Task> list) {
-        consumerResult.process(list);
-    }
+    private static class TaskListTask extends BaseCrudTask<Void, List<Task>> {
 
-    private class TaskListTask extends AsyncTask<String, Void, List<Task>> {
-        private Context context;
-        private ProgressDialog loading;
-        private String titleDialogLoading;
-        private TaskDao taskDao;
-
-        public TaskListTask(Context context, String titleDialogLoading) {
-            this.titleDialogLoading = titleDialogLoading;
-            this.context = context;
-            taskDao = new TaskDao(new DbHelper(context));
+        TaskListTask(Context context, String titleDialogLoading) {
+            super(context, titleDialogLoading);
         }
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            loading = ProgressDialog.show(context, this.titleDialogLoading, "Wait...", false, false);
+        protected List<Task> doInBackground(Void... params) {
+            return taskDao.listTaskActive();
         }
 
-        @Override
-        protected List<Task> doInBackground(String... params) {
-            List<Task> listTasks = taskDao.listTaskActive();
-            return listTasks;
-        }
-
-        @Override
-        protected void onPostExecute(List<Task> listTasks) {
-            super.onPostExecute(listTasks);
-            this.loading.dismiss();
-            Log.d("onPostExecute",String.format("Hay %d Tasks",listTasks.size()));
-            processResult(listTasks);
-        }
     }
 }

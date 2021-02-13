@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         IConsumerResult<List<Task>> consumerResult = this::listRecords;
         this.listService = new TaskListService(this, consumerResult);
 
-        IConsumerResult<Integer> consumerResultDelete = this::processDeleteResult;
+        IConsumerResult<Long> consumerResultDelete = this::processDeleteResult;
         this.deleteService = new TaskDeleteService(this, consumerResultDelete);
     }
 
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         private final Calendar today;
         private final Calendar tomorrow;
 
-        public TaskListAdapter(@NonNull Context context, @NonNull List<Task> listTasks ) {
+        TaskListAdapter(@NonNull Context context, @NonNull List<Task> listTasks) {
             super(context, android.R.layout.simple_list_item_1, listTasks);
             this.listTasks = listTasks;
             this.arrPriorities = getResources().getStringArray(R.array.array_priorities);
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
             return rowView;
         }
 
-        public void deleteTask(Task task){
+        void deleteTask(Task task) {
             listTasks.remove(task);
             this.notifyDataSetChanged();
             tvRecordCount.setText(String.format("%d Tasks",listTasks.size()));
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setMessage(msg);
         builder.setCancelable(false);
         builder.setPositiveButton("Yes", (dialog, which) -> {
-            deleteService.delete(currentTask.getId());
+            deleteService.delete(currentTask);
             listViewAdapter.deleteTask(currentTask);
         });
 
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void processDeleteResult(Integer result) {
+    private void processDeleteResult(Long result) {
         String msg;
         if(result>0) msg = "Task deleted sucessfully";
         else msg = "ATENTION: Task Can't be deleted!";

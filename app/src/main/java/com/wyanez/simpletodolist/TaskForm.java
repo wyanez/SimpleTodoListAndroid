@@ -17,6 +17,8 @@ import com.wyanez.simpletodolist.util.IConsumerResult;
 
 import java.util.Calendar;
 
+import static com.wyanez.simpletodolist.service.TaskSaveService.Operation;
+
 public class TaskForm {
 
     private final MainActivity mainActivity;
@@ -30,19 +32,20 @@ public class TaskForm {
     private Spinner spinnerPriority;
     private CheckBox checkActive;
     private Calendar deadline;
-    private String mode;
+
+    private Operation mode;
 
     private Task currentTask;
 
-    public TaskForm(MainActivity mainActivity) {
+    TaskForm(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
         IConsumerResult<Long> consumerResult = this::finishSaveTask;
         taskSaveService = new TaskSaveService(mainActivity,consumerResult);
-        this.mode = "create";
+        this.mode = Operation.CREATE;
         currentTask = null;
     }
 
-    public void showForm() {
+    void showForm() {
         LayoutInflater inflater = (LayoutInflater) mainActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final View formElementsView = inflater.inflate(R.layout.activity_task_form,null, false);
 
@@ -80,7 +83,7 @@ public class TaskForm {
 
         boolean isValid = validateData(title,description,tags,deadline,priority,active);
         if(isValid){
-            if(this.mode.equals("create")) currentTask = new Task();
+            if (this.mode == Operation.CREATE) currentTask = new Task();
             currentTask.setTitle(title);
             currentTask.setDescription(description);
             currentTask.setTags(tags);
@@ -162,7 +165,7 @@ public class TaskForm {
         int monthOfYear = deadline.get(Calendar.MONTH);
         int year = deadline.get(Calendar.YEAR);
         editDeadline.setText(String.format("%02d/%02d/%d",dayOfMonth,monthOfYear+1, year));
-        this.mode = "edit";
+        this.mode = Operation.EDIT;
         this.currentTask = task;
         dialogTask.setTitle("Edit Task");
     }
