@@ -19,8 +19,8 @@ public class TaskSaveService {
         this.context = context;
     }
 
-    public void save(Task task) {
-        TaskSave saveTask = new TaskSave(context,"Saving task...","create");
+    public void save(Task task,String mode) {
+        TaskSave saveTask = new TaskSave(context,"Saving task...",mode);
         saveTask.execute(task);
     }
 
@@ -54,13 +54,13 @@ public class TaskSaveService {
         @Override
         protected Long doInBackground(Task... params) {
             task = params[0];
-            long newTaskId = 0;
-            if(mode.equals("create"))  newTaskId = taskDao.insert(task);
-            else{
-                //taskDao.update(task);
-                //newTaskId = task.getId();
+            long taskId;
+            if(mode.equals("create")) taskId = taskDao.insert(task);
+            else{ //edit
+                int result = taskDao.update(task);
+                taskId = result>0 ? task.getId(): result;
             }
-            return newTaskId;
+            return taskId;
         }
 
         @Override

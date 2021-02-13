@@ -31,14 +31,7 @@ public class TaskDao {
 
     public long insert(Task task){
         db = dbHelper.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(DbContract.TaskEntry.COLUMN_TITLE,task.getTitle());
-        values.put(DbContract.TaskEntry.COLUMN_DESCRIPTION,task.getDescription());
-        values.put(DbContract.TaskEntry.COLUMN_TAGS,task.getTags());
-        values.put(DbContract.TaskEntry.COLUMN_PRIORITY,task.getPriority());
-        values.put(DbContract.TaskEntry.COLUMN_DEADLINE,task.getDeadlineYMD());
-        values.put(DbContract.TaskEntry.COLUMN_ACTIVE,task.isActive() ? 1 : 0);
+        ContentValues values = getContentValues(task);
 
         Log.d("Task/insert",values.toString());
         long newId;
@@ -54,6 +47,18 @@ public class TaskDao {
             db.close();
         }
         return newId;
+    }
+
+    private ContentValues getContentValues(Task task) {
+        ContentValues values = new ContentValues();
+        if(task.getId()>0) values.put(DbContract.TaskEntry._ID,task.getId());
+        values.put(DbContract.TaskEntry.COLUMN_TITLE,task.getTitle());
+        values.put(DbContract.TaskEntry.COLUMN_DESCRIPTION,task.getDescription());
+        values.put(DbContract.TaskEntry.COLUMN_TAGS,task.getTags());
+        values.put(DbContract.TaskEntry.COLUMN_PRIORITY,task.getPriority());
+        values.put(DbContract.TaskEntry.COLUMN_DEADLINE,task.getDeadlineYMD());
+        values.put(DbContract.TaskEntry.COLUMN_ACTIVE,task.isActive() ? 1 : 0);
+        return values;
     }
 
     private void initColumns(Cursor cursor) {
@@ -75,8 +80,6 @@ public class TaskDao {
                 DbContract.TaskEntry.COLUMN_ACTIVE,1,
                 DbContract.TaskEntry.COLUMN_DEADLINE);
 
-        //String sql= String.format("SELECT * FROM %s", DbContract.TaskEntry.TABLE_NAME);
-
         Log.d("listTasks","SQL = " +sql);
         Cursor cursor = db.rawQuery(sql, null);
         initColumns(cursor);
@@ -96,7 +99,7 @@ public class TaskDao {
         task.setTags(cursor.getString(columnTags));
         task.setPriority(cursor.getInt(columnPriority));
         task.setDeadline(Utilities.getCalendarFromString(cursor.getString(columnDeadline)));
-
+        task.setActive(cursor.getInt(columnActive)==1);
         return task;
     }
 
@@ -115,5 +118,17 @@ public class TaskDao {
         }
         db.close();
         return  result;
+    }
+
+    public int update(Task task) {
+        db = dbHelper.getWritableDatabase();
+        ContentValues values = getContentValues(task);
+        Log.d("Task/edit",values.toString());
+
+        String whereClause = String.format("%s = ?",DbContract.TaskEntry._ID);
+        String[] whereParams = {String.valueOf(task.getId())};
+        int rowsAffected = db.update(DbContract.TaskEntry.TABLE_NAME,values,whereClause,whereParams);
+        db.close();
+        return rowsAffected;
     }
 }

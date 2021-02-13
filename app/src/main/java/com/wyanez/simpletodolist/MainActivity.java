@@ -2,7 +2,6 @@ package com.wyanez.simpletodolist;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -63,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         final Button btnNuevo = findViewById(R.id.btnAddTask);
         btnNuevo.setOnClickListener(view -> {
             taskForm = new TaskForm(MainActivity.this);
-            taskForm.showFormAddTask();
+            taskForm.showForm();
         });
         this.listTasks();
         registerForContextMenu(listview);
@@ -90,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             task = listViewAdapter.getItem(info.position);
             switch (item.getItemId()) {
                 case R.id.menuEdit:
-                    Toast.makeText(getApplicationContext(), "Edit Task Selected!", Toast.LENGTH_SHORT).show();
+                    showDialogEdit(task);
                     return true;
                 case R.id.menuDelete:
                     showDialogDeleteTask(task);
@@ -190,6 +189,12 @@ public class MainActivity extends AppCompatActivity {
         if(result>0) msg = "Task deleted sucessfully";
         else msg = "ATENTION: Task Can't be deleted!";
         Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_LONG).show();
+    }
+
+    private void showDialogEdit(Task currentTask){
+        taskForm = new TaskForm(MainActivity.this);
+        taskForm.showForm();
+        taskForm.setTask(currentTask);
     }
 
 }

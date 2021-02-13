@@ -3,12 +3,10 @@ package com.wyanez.simpletodolist;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -25,57 +23,54 @@ public class TaskForm {
     private final TaskSaveService taskSaveService;
     private AlertDialog dialogTask ;
 
+    private EditText editTitle;
+    private EditText editDescription;
+    private EditText editTags;
+    private EditText editDeadline;
+    private Spinner spinnerPriority;
+    private CheckBox checkActive;
+    private Calendar deadline;
+    private String mode;
+
+    private Task currentTask;
+
     public TaskForm(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
-        IConsumerResult<Long> consumerResult = (result) -> { finishSaveTask(result);};
+        IConsumerResult<Long> consumerResult = this::finishSaveTask;
         taskSaveService = new TaskSaveService(mainActivity,consumerResult);
+        this.mode = "create";
+        currentTask = null;
     }
 
-    public void showFormAddTask() {
+    public void showForm() {
         LayoutInflater inflater = (LayoutInflater) mainActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final View formElementsView = inflater.inflate(R.layout.activity_task_form,null, false);
 
-        final EditText editTitle = formElementsView.findViewById(R.id.editTitleTask);
-        final EditText editDescription = formElementsView.findViewById(R.id.editDescription);
-        final EditText editTags = formElementsView.findViewById(R.id.editTags);
-        final EditText editDeadline = formElementsView.findViewById(R.id.editDeadline);
-        final Spinner spinnerPriority = formElementsView.findViewById(R.id.spinnerPriorityTask);
-        final CheckBox checkActive = formElementsView.findViewById(R.id.checkActive);
-        final Calendar deadline = Calendar.getInstance();
+        editTitle = formElementsView.findViewById(R.id.editTitleTask);
+        editDescription = formElementsView.findViewById(R.id.editDescription);
+        editTags = formElementsView.findViewById(R.id.editTags);
+        editDeadline = formElementsView.findViewById(R.id.editDeadline);
+        spinnerPriority = formElementsView.findViewById(R.id.spinnerPriorityTask);
+        checkActive = formElementsView.findViewById(R.id.checkActive);
+        deadline = Calendar.getInstance();
 
-        editDeadline.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                showDatePickerDialog(editDeadline,deadline);
-            }
-        });
+        editDeadline.setOnClickListener(v -> showDatePickerDialog(editDeadline,deadline));
 
         AlertDialog.Builder builderDialogTask = new AlertDialog.Builder(mainActivity)
                 .setView(formElementsView)
                 .setTitle("New Task")
                 .setNegativeButton("Cancel",
-                        (dialog, which) -> Log.d("New Task","Cancel Selected"))
+                        (dialog, which) -> Log.d("FormTask","Cancel Selected"))
                 .setPositiveButton("Save",
                         (dialog, which) -> { });
 
         dialogTask = builderDialogTask.create();
         dialogTask.show();
 
-        dialogTask.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> saveDataForm(editTitle,
-                editDescription,
-                editTags,
-                deadline,
-                spinnerPriority,
-                checkActive));
+        dialogTask.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> saveDataForm());
     }
 
-    private void saveDataForm(EditText editTitle,
-                              EditText editDescription,
-                              EditText editTags,
-                              Calendar deadline,
-                              Spinner spinnerPriority,
-                              CheckBox checkActive){
-
+    private void saveDataForm(){
         String title = editTitle.getText().toString().trim();
         String description = editDescription.getText().toString().trim();
         String tags = editTags.getText().toString().trim();
@@ -85,9 +80,15 @@ public class TaskForm {
 
         boolean isValid = validateData(title,description,tags,deadline,priority,active);
         if(isValid){
-            Task task = new Task(title,description,tags,deadline,priority,active);
-            Log.d("NewTask",task.toString());
-            taskSaveService.save(task);
+            if(this.mode.equals("create")) currentTask = new Task();
+            currentTask.setTitle(title);
+            currentTask.setDescription(description);
+            currentTask.setTags(tags);
+            currentTask.setPriority(priority);
+            currentTask.setActive(active);
+            currentTask.setDeadline(deadline);
+            Log.d("saveTask", currentTask.toString());
+            taskSaveService.save(currentTask,mode);
         }
     }
 
@@ -128,9 +129,8 @@ public class TaskForm {
 
     private void showDatePickerDialog(final EditText editTextDate, final Calendar selectedDate){
         DatePickerDialog.OnDateSetListener listener= (view, year, monthOfYear, dayOfMonth) -> {
-            editTextDate.setText(String.format("%2d/%2d/%d",dayOfMonth,monthOfYear+1, year));
+            editTextDate.setText(String.format("%02d/%02d/%d",dayOfMonth,monthOfYear+1, year));
             selectedDate.set(year,monthOfYear,dayOfMonth);
-
         };
         int year = selectedDate.get(Calendar.YEAR);
         int month = selectedDate.get(Calendar.MONTH);
@@ -148,6 +148,23 @@ public class TaskForm {
             dialogTask.cancel();
             mainActivity.listTasks();
         }
+    }
+
+    public void setTask(Task task){
+        editTitle.setText(task.getTitle());
+        editDescription.setText(task.getDescription());
+        editTags.setText(task.getTags());
+        spinnerPriority.setSelection(task.getPriority());
+        checkActive.setChecked(task.isActive());
+        deadline = task.getDeadline();
+
+        int dayOfMonth = deadline.get(Calendar.DAY_OF_MONTH);
+        int monthOfYear = deadline.get(Calendar.MONTH);
+        int year = deadline.get(Calendar.YEAR);
+        editDeadline.setText(String.format("%02d/%02d/%d",dayOfMonth,monthOfYear+1, year));
+        this.mode = "edit";
+        this.currentTask = task;
+        dialogTask.setTitle("Edit Task");
     }
 
 }
